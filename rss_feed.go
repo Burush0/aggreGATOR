@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/xml"
+	"fmt"
 	"html"
 	"io"
 	"net/http"
@@ -63,4 +64,21 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	}
 
 	return &feed, nil
+}
+
+func parsePubDate(pubDate string) (time.Time, error) {
+	formats := []string{
+		time.RFC1123Z, // Mon, 02 Jan 2006 15:04:05 -0700
+		time.RFC822,   // 02 Jan 06 15:04 MST
+		time.RFC3339,  // 2006-01-02T15:04:05Z07:00
+	}
+
+	for _, format := range formats {
+		parsedTime, err := time.Parse(format, pubDate)
+		if err == nil {
+			return parsedTime.UTC(), nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("unable to parse PubDate: %s", pubDate)
 }
